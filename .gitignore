@@ -49,4 +49,11 @@ Temporary Items
 # IntelliJ IDEA
 .idea/
 *.iml
+
+# Eclipse
+/.settings/
+.classpath
+.project
+
+# Maven
 /target/
