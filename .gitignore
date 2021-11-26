@@ -57,3 +57,4 @@ Temporary Items
 
 # Maven
 /target/
+.dependency-reduced-pom.xml
