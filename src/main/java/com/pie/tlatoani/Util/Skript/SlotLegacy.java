@@ -33,8 +33,18 @@ public class SlotLegacy extends Slot {
         slotImpl.setItem(itemStack);
     }
 
-    @Override
     protected String toString_i() {
         return slotImpl.toString_i();
     }
+
+	@Override
+	public String toString(Event e, boolean debug) {
+		if (debug) return this.slotImpl.toString_i();
+		return this.slotImpl.toString();
+	}
+
+	@Override
+	public boolean isSameSlot(ch.njol.skript.util.slot.Slot o) {
+		return o instanceof SlotLegacy && slotImpl.isSameSlot(((SlotLegacy) o).slotImpl);
+	}
 }

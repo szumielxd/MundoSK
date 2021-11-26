@@ -2,8 +2,8 @@ package com.pie.tlatoani.Miscellaneous.Matcher;
 
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.registrations.Comparators;
 import com.pie.tlatoani.Core.Skript.CustomScope;
@@ -42,16 +42,17 @@ public class ScopeMatches extends CustomScope {
 
     @Override
     public void setScope() {
-        if (scope.getParent() instanceof Conditional) {
+    	TriggerSection parent = (CustomScope.isNewSectionsSupported()? scopeNew : scopeOld).get().getParent();
+        if (CustomScope.condition.getDeclaringClass().isInstance(parent)) {
             Condition condition = null;
             try {
-                condition = (Condition) CustomScope.condition.get(scope.getParent());
+                condition = (Condition) CustomScope.condition.get(parent);
             } catch (IllegalAccessException e) {
                 Logging.reportException(this, e);
             }
             if (condition instanceof ScopeMatcher) {
                 object2Expression = ((ScopeMatcher) condition).objectExpression;
-                last.setNext(scope.getParent().getNext());
+                last.setNext(parent.getNext());
             }
         }
     }

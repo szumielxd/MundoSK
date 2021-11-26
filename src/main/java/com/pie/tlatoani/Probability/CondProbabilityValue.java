@@ -9,7 +9,6 @@ import javax.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.TriggerItem;
@@ -44,7 +43,7 @@ public class CondProbabilityValue extends Condition {
 	@Override
 	public TriggerItem setParent(final @Nullable TriggerSection parent) {
 		super.parent = parent;
-		if (!(parent instanceof Conditional)) {
+		if (!CustomScope.condition.getDeclaringClass().isInstance(parent)) {
 			Skript.error("'%number% prob' must be placed within a probability scope!");
 		}
 		return this;

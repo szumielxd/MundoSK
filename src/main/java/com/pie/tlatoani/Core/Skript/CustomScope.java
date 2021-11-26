@@ -11,6 +11,10 @@ import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.function.Functions;
 import ch.njol.skript.lang.function.ScriptFunction;
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.sections.SecConditional;
+import ch.njol.skript.sections.SecLoop;
+import ch.njol.skript.sections.SecWhile;
+
 import com.pie.tlatoani.Core.Static.Logging;
 import com.pie.tlatoani.Core.Static.Reflection;
 import com.pie.tlatoani.Core.Static.Scheduling;
@@ -20,6 +24,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -48,9 +53,10 @@ public abstract class CustomScope extends Condition {
 	private static boolean getScopesWasRun = true;
 
 	protected boolean canStandFree = false;
-	protected ScriptFunction function = null;
+	protected ScriptFunction<?> function = null;
 	protected TriggerSection scopeParent;
-	protected Conditional scope = null;
+	protected Optional<Conditional> scopeOld = Optional.empty();
+	protected Optional<SecConditional> scopeNew = Optional.empty();
 	protected TriggerItem first;
 	protected TriggerItem last;
 
@@ -59,16 +65,34 @@ public abstract class CustomScope extends Condition {
 	protected Kleenean arg2;
 	protected ParseResult arg3;
 	
+	private static boolean newSectionsSupported = false;
+	
 	static {
 		try {
+			Class.forName("ch.njol.skript.sections.SecConditional");
+			newSectionsSupported = true;
+		} catch (ClassNotFoundException e) {}
+		
+		
+		
+		try {
+			if (newSectionsSupported) {
+				condition = SecConditional.class.getDeclaredField("condition");
+				condition.setAccessible(true);
+				whilecondition = SecWhile.class.getDeclaredField("condition");
+				whilecondition.setAccessible(true);
+				CONDITIONAL_COND = Reflection.getField(SecConditional.class, "condition", Condition.class);
+			} else {
+				condition = Conditional.class.getDeclaredField("cond");
+				condition.setAccessible(true);
+				whilecondition = While.class.getDeclaredField("c");
+				whilecondition.setAccessible(true);
+				CONDITIONAL_COND = Reflection.getField(Conditional.class, "cond", Condition.class);
+			}
 			firstitem = TriggerSection.class.getDeclaredField("first");
 			firstitem.setAccessible(true);
 			lastitem = TriggerSection.class.getDeclaredField("last");
 			lastitem.setAccessible(true);
-			condition = Conditional.class.getDeclaredField("cond");
-			condition.setAccessible(true);
-			whilecondition = While.class.getDeclaredField("c");
-			whilecondition.setAccessible(true);
 			triggers = SkriptEventHandler.class.getDeclaredField("triggers");
 			triggers.setAccessible(true);
 			commandTrigger = ScriptCommand.class.getDeclaredField("trigger");
@@ -83,8 +107,7 @@ public abstract class CustomScope extends Condition {
 			runmethod.setAccessible(true);
 
 			TRIGGER_SECTION_FIRST = Reflection.getField(TriggerSection.class, "first", TriggerItem.class);
-            TRIGGER_SECTION_LAST = Reflection.getField(TriggerSection.class, "last", TriggerItem.class);
-			CONDITIONAL_COND = Reflection.getField(Conditional.class, "cond", Condition.class);
+			TRIGGER_SECTION_LAST = Reflection.getField(TriggerSection.class, "last", TriggerItem.class);
 			SCRIPT_FUNCTION_TRIGGER = Reflection.getField(ScriptFunction.class, "trigger", Trigger.class);
 
 			TRIGGER_ITEM_WALK = Reflection.getMethod(TriggerItem.class, "walk", Event.class);
@@ -92,21 +115,60 @@ public abstract class CustomScope extends Condition {
 			Logging.reportException(CustomScope.class, e);
 		}
 	}
+	
+	public static boolean isNewSectionsSupported() {
+		return newSectionsSupported;
+	}
+	
+	public static boolean hasDelayBefore() {
+		try {
+			// Old version
+			Field f = ScriptLoader.class.getField("hasDelayBefore");
+			return ((Kleenean) f.get(null)).isTrue();
+		} catch (NullPointerException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			// New version
+			return ScriptLoader.getHasDelayBefore().isTrue();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static List<TriggerSection> getCurrentSections() {
+    	try {
+    		// Old version
+    		Field f = ScriptLoader.class.getField("currentSections");
+    		return (List<TriggerSection>) f.get(null);
+    	} catch (NullPointerException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+    		return ScriptLoader.getCurrentSections();
+    	}
+    }
+	
+	@SuppressWarnings("unchecked")
+	public static List<?> getCurrentLoops() {
+    	try {
+    		// Old version
+    		Field f = ScriptLoader.class.getField("currentLoops");
+    		return (List<SecLoop>) f.get(null);
+    	} catch (NullPointerException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+    		return ScriptLoader.getCurrentLoops();
+    	}
+    }
 
 	public static void registerImmediateScopes(Trigger trigger) {
         TriggerItem going = TRIGGER_SECTION_FIRST.get(trigger);
         while (going != null) {
-            if (going instanceof Conditional) {
+            if (condition.getDeclaringClass().isInstance(going)) {
                 Condition condition1 = CONDITIONAL_COND.get(going);
                 if (condition1 instanceof CustomScope) {
-                    ((CustomScope) condition1).setScope((Conditional) going);
+                	if (CustomScope.isNewSectionsSupported()) ((CustomScope) condition1).setScope((SecConditional)going);
+                	else ((CustomScope) condition1).setScope((Conditional)going);
                 }
             }
-            going = going instanceof Loop ? ((Loop) going).getActualNext() : going instanceof While ? ((While) going).getActualNext() : going.getNext();
-
+            if (CustomScope.isNewSectionsSupported()) going = going instanceof SecLoop ? ((SecLoop) going).getActualNext() : going instanceof SecWhile ? ((SecWhile) going).getActualNext() : going.getNext();
+            else going = going instanceof Loop ? ((Loop) going).getActualNext() : going instanceof While ? ((While) going).getActualNext() : going.getNext();
         }
     }
 
+	@SuppressWarnings("unchecked")
 	public static void getScopes() {
 		if (!getScopesWasRun) {
 			try {
@@ -140,8 +202,23 @@ public abstract class CustomScope extends Condition {
 	}
 
 	public void setScope(Conditional scope) {
+		if (isNewSectionsSupported()) throw new IllegalStateException("This method has effect only on versions of skript below 2.6");
 		if (scope != null) {
-			this.scope = scope;
+			this.scopeOld = Optional.of(scope);
+            this.first = TRIGGER_SECTION_FIRST.get(scope);
+            this.last = TRIGGER_SECTION_LAST.get(scope);
+			Logging.debug(this, "GUTEN ROUNDEN:: " + first);
+			if (scopeParent == null) {
+				scopeParent = scope.getParent();
+			}
+			setScope();
+		}
+	}
+	
+	public void setScope(SecConditional scope) {
+		if (!isNewSectionsSupported()) throw new IllegalStateException("This method has effect only on versions of skript above or equal 2.6");
+		if (scope != null) {
+			this.scopeNew = Optional.of(scope);
             this.first = TRIGGER_SECTION_FIRST.get(scope);
             this.last = TRIGGER_SECTION_LAST.get(scope);
 			Logging.debug(this, "GUTEN ROUNDEN:: " + first);
@@ -153,22 +230,24 @@ public abstract class CustomScope extends Condition {
 	}
 
 	protected void retrieveScope() {
-		setScope(getScope(scopeParent, this));
+		if (CustomScope.isNewSectionsSupported()) setScope((SecConditional) getScope(scopeParent, this));
+		else setScope((Conditional) getScope(scopeParent, this));
 	}
 
-	public static Conditional getScope(TriggerSection parent, CustomScope scope) {
+	public static TriggerItem getScope(TriggerSection parent, CustomScope scope) {
 	    TriggerItem going = TRIGGER_SECTION_FIRST.get(parent);
 	    TriggerItem next = parent.getNext();
 	    while (going != null && going != next) {
 	        Logging.debug(CustomScope.class, "GOING :: " + going);
-	        if (going instanceof Conditional) {
+	        if (condition.getDeclaringClass().isInstance(going)) {
 	            Condition condition = CONDITIONAL_COND.get(going);
 	            if (scope == condition) {
                     Logging.debug(CustomScope.class, "FOUND THE CONDITIONAL :: " + going);
-	                return (Conditional) going;
+	                return (TriggerItem) going;
                 }
             }
-            going = going instanceof Loop ? ((Loop) going).getActualNext() : going instanceof While ? ((While) going).getActualNext() : going.getNext();
+	        if (CustomScope.isNewSectionsSupported()) going = going instanceof SecLoop ? ((SecLoop) going).getActualNext() : going instanceof SecWhile ? ((SecWhile) going).getActualNext() : going.getNext();
+            else going = going instanceof Loop ? ((Loop) going).getActualNext() : going instanceof While ? ((While) going).getActualNext() : going.getNext();
         }
         throw new IllegalStateException("Unable to find the correct scope for CustomScope = " + scope + ", Parent = " + parent);
     }
@@ -188,9 +267,9 @@ public abstract class CustomScope extends Condition {
 		this.arg3 = arg3;
         Node node = SkriptLogger.getNode();
         if (node instanceof SectionNode) {
-            int currentSectionsSize = ScriptLoader.currentSections.size();
+            int currentSectionsSize = CustomScope.getCurrentSections().size();
             if (currentSectionsSize > 0) {
-                scopeParent = ScriptLoader.currentSections.get(currentSectionsSize - 1);
+                scopeParent = CustomScope.getCurrentSections().get(currentSectionsSize - 1);
             } else if (Functions.currentFunction != null) {
                 function = Functions.currentFunction;
             } else {
@@ -207,7 +286,7 @@ public abstract class CustomScope extends Condition {
 
 	@Override
 	public boolean check(Event e) {
-		if (scope == null) {
+		if (!(CustomScope.isNewSectionsSupported() ? scopeNew : scopeOld).isPresent()) {
 		    if (function != null) {
                 scopeParent = SCRIPT_FUNCTION_TRIGGER.get(function);
             }

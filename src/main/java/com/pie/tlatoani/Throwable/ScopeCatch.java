@@ -24,7 +24,7 @@ public class ScopeCatch extends CustomScope {
     @Override
     public boolean init() {
         container = exprs[0];
-        Class[] classes = container.acceptChange(Changer.ChangeMode.SET);
+        Class<?>[] classes = container.acceptChange(Changer.ChangeMode.SET);
         if (!(Arrays.asList(classes).contains(Throwable.class) || Arrays.asList(classes).contains(Object.class))) {
             Skript.error("The expression " + container + " cannot be setSafely to an exception! The expression of a catch statement needs to be able to catch an exception.");
             return false;
@@ -34,7 +34,7 @@ public class ScopeCatch extends CustomScope {
 
     public void catchThrowable(Event event, Throwable caught) {
         container.change(event, new Throwable[]{caught}, Changer.ChangeMode.SET);
-        if (scope == null) {
+        if (!(CustomScope.isNewSectionsSupported()? scopeNew : scopeOld).isPresent()) {
             if (function != null) {
                 scopeParent = SCRIPT_FUNCTION_TRIGGER.get(function);
             }
@@ -45,7 +45,7 @@ public class ScopeCatch extends CustomScope {
             }
         }
         TriggerItem going = first;
-        TriggerItem next = scope.getNext();
+        TriggerItem next = (CustomScope.isNewSectionsSupported() ? scopeNew : scopeOld).get().getNext();
         Logging.debug(this, "First: " + first);
         Logging.debug(this, "Next: " + next);
         while (going != null && going != next) {

@@ -1,14 +1,14 @@
 package com.pie.tlatoani.Miscellaneous.Tree;
 
-import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.sections.SecLoop;
 import ch.njol.util.Kleenean;
-import com.pie.tlatoani.Miscellaneous.Tree.ExprTreeOfListVariable;
+
+import com.pie.tlatoani.Core.Skript.CustomScope;
 import org.bukkit.event.Event;
 
 /**
@@ -39,9 +39,19 @@ public class ExprBranch extends SimpleExpression<String> {
 
     @Override
     public boolean init(Expression<?>[] expressions, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        for (Loop loop : ScriptLoader.currentLoops) {
-            if (loop.getLoopedExpression() instanceof ExprTreeOfListVariable) {
-                exprTreeOfListVariable = (ExprTreeOfListVariable) loop.getLoopedExpression();
+        if (CustomScope.isNewSectionsSupported()) {
+        	for (Object obj : CustomScope.getCurrentLoops()) {
+        		SecLoop loop = (SecLoop) obj;
+                if (loop.getLoopedExpression() instanceof ExprTreeOfListVariable) {
+                    exprTreeOfListVariable = (ExprTreeOfListVariable) loop.getLoopedExpression();
+                }
+            }
+        } else {
+        	for (Object obj : CustomScope.getCurrentLoops()) {
+        		Loop loop = (Loop) obj;
+                if (loop.getLoopedExpression() instanceof ExprTreeOfListVariable) {
+                    exprTreeOfListVariable = (ExprTreeOfListVariable) loop.getLoopedExpression();
+                }
             }
         }
         if (exprTreeOfListVariable == null) {

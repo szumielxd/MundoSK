@@ -13,30 +13,31 @@ import java.util.WeakHashMap;
 /**
  * Created by Tlatoani on 8/14/16.
  */
+@SuppressWarnings("unchecked")
 public class FunctionCodeBlock implements CodeBlock {
-    Function function;
+    Function<?> function;
 
-    private static WeakHashMap weakHashMap;
+    private static WeakHashMap<Event, Object> weakHashMap;
 
     static {
         try {
             Field localVariables = Variables.class.getDeclaredField("localVariables");
             localVariables.setAccessible(true);
-            weakHashMap = (WeakHashMap) localVariables.get(null);
+            weakHashMap = (WeakHashMap<Event, Object>) localVariables.get(null);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             Logging.reportException(FunctionCodeBlock.class, e);
         }
     }
 
-    public FunctionCodeBlock(Function function) {
+    public FunctionCodeBlock(Function<?> function) {
         this.function = function;
     }
 
     @Override
     public Object execute(Event event, boolean preserveOldValues) {
-        FunctionEvent functionEvent = new FunctionEvent();
+        FunctionEvent<?> functionEvent = new FunctionEvent<>(function);
         weakHashMap.put(functionEvent, weakHashMap.get(event));
-        Parameter[] parameters = function.getParameters();
+        Parameter<?>[] parameters = function.getParameters();
         Object[][] args = new Object[parameters.length][1];
         for (int i = 0; i < parameters.length; i++) {
             String paramToString = parameters[i].toString();

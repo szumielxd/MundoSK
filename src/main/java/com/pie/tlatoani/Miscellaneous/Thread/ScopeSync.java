@@ -43,7 +43,7 @@ public class ScopeSync extends CustomScope {
 
     @Override
     public boolean go(Event event) {
-        Runnable runnable = () -> TriggerItem.walk(scope == null ? getNext() : first, event);
+        Runnable runnable = () -> TriggerItem.walk((!(CustomScope.isNewSectionsSupported()? scopeNew : scopeOld).isPresent()) ? getNext() : first, event);
         if (delay == null) {
             Scheduling.sync(runnable);
         } else {

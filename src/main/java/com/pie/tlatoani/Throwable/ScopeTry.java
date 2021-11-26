@@ -2,7 +2,6 @@ package com.pie.tlatoani.Throwable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.TriggerItem;
 import com.pie.tlatoani.Core.Skript.CustomScope;
 import com.pie.tlatoani.Core.Static.Logging;
@@ -21,7 +20,7 @@ public class ScopeTry extends CustomScope {
 		Exception caught = null;
 		try {
 			TriggerItem going = first;
-            TriggerItem next = scope.getNext();
+            TriggerItem next = (CustomScope.isNewSectionsSupported()? scopeNew : scopeOld).get().getNext();
             Logging.debug(this, "First: " + first);
             Logging.debug(this, "Next: " + next);
 			while (going != null && going != next) {
@@ -41,8 +40,8 @@ public class ScopeTry extends CustomScope {
 
 	@Override
 	public void setScope() {
-		TriggerItem possibleCatch = scope.getNext();
-		if (possibleCatch instanceof Conditional) {
+		TriggerItem possibleCatch = (CustomScope.isNewSectionsSupported()? scopeNew : scopeOld).get().getNext();
+		if (CustomScope.condition.getDeclaringClass().isInstance(possibleCatch)) {
 			try {
 				Condition catchCond = (Condition) CustomScope.condition.get(possibleCatch);
 				if (catchCond instanceof ScopeCatch) {

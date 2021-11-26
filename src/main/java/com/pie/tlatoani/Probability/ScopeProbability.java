@@ -8,9 +8,9 @@ import org.bukkit.event.Event;
 
 import com.pie.tlatoani.Core.Skript.CustomScope;
 
-import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
+import ch.njol.skript.sections.SecConditional;
 
 public class ScopeProbability extends CustomScope {
 	private List<CondProbabilityValue> probs = new ArrayList<CondProbabilityValue>();
@@ -24,8 +24,8 @@ public class ScopeProbability extends CustomScope {
 
 	@Override
 	public boolean go(Event e) {
-	    scope.setNext(null);
-		List<Number> nums = new ArrayList<Number>();
+	    (CustomScope.isNewSectionsSupported() ? scopeOld : scopeNew).get().setNext(null);
+	    List<Number> nums = new ArrayList<Number>();
 		Number total = 0;
 		for (int i = 0; i < probs.size(); i++) {
 			total = total.doubleValue() + probs.get(i).get(e).doubleValue();
@@ -40,21 +40,22 @@ public class ScopeProbability extends CustomScope {
 		}
 		CondProbabilityValue start = probs.get(j);
 		TriggerItem.walk(start.getTriggerItem(), e);
-        scope.setNext(scope.getNext());
+		if (CustomScope.isNewSectionsSupported()) scopeNew.get().setNext(scopeNew.get().getNext());
+	    else scopeOld.get().setNext(scopeOld.get().getNext());
 		return false;
 	}
 	
 	@Override
 	public void setScope() {
-		Boolean within = true;
+		//Boolean within = true;
 		TriggerItem going = first;
-		TriggerItem end = scope.getNext();
+		TriggerItem end = (CustomScope.isNewSectionsSupported() ? scopeNew : scopeOld).get().getNext();
 		Integer i = 0;
 		while (going != null && going != end) {
 			if (going instanceof CondProbabilityValue) {
 				probs.add((CondProbabilityValue) going);
 				indeces.add(i);
-			} else if (going instanceof Conditional) {
+			} else if (going instanceof SecConditional) {
 				try {
 					Object goingcond = condition.get((TriggerSection) going);
 					if (goingcond instanceof CondProbabilityValue) {
