@@ -2,13 +2,14 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.pie.tlatoani</groupId>
 	<artifactId>MundoSK</artifactId>
-	<version>1.8.7-SNAPSHOT</version>
+	<version>1.8.7</version>
+	<url>https://github.com/szumielxd/MundoSK/</url>
 	<name>MundoSK</name>
 	<description>Packets, World Borders, World Management, Custom World Generation, Tablist and Skin Modification, Books, Enchanted Books, WebSockets, TerrainControl hook, and more for Skript!</description>
 	<properties>
-		<author>szumielxd</author>
+		<author>Tlatoani, szumielxd</author>
 		<package>com.pie.tlatoani</package>
-		<mainClass>${package}.MundoSK</mainClass>
+		<mainClass>${package}.Mundo</mainClass>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<build>
@@ -27,7 +28,6 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.2.0</version>
 				<configuration>
-					<finalName>${finalName}</finalName>
 					<archive>
 						<index>false</index>
 						<addMavenDescriptor>false</addMavenDescriptor>
@@ -105,14 +105,14 @@
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot-api</artifactId>
-			<version>1.9.4-R0.1-SNAPSHOT</version>
+			<version>1.12.2-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot-api</artifactId>
-			<version>1.9.4-R0.1-SNAPSHOT</version>
+			<version>1.12.2-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 			<type>javadoc</type>
 		</dependency>
@@ -132,21 +132,25 @@
 			<groupId>io.netty</groupId>
 			<artifactId>netty-buffer</artifactId>
 			<version>4.1.70.Final</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>3.0.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.11.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.github.MCTCP.TerrainControl</groupId>
 			<artifactId>terraincontrol-bukkit</artifactId>
 			<version>v2.8.1</version>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>org.spigotmc</groupId>
