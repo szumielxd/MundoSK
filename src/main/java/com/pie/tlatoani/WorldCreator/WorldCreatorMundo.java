@@ -70,7 +70,7 @@ public class WorldCreatorMundo {
         Registration.registerEnum(WorldType.class, "worldtype", WorldType.values())
                 .pair("SUPERFLAT", WorldType.FLAT)
                 .pair("LARGE BIOMES", WorldType.LARGE_BIOMES)
-                .pair("VERSION 1.1", WorldType.VERSION_1_1)
+                // .pair("VERSION 1.1", WorldType.VERSION_1_1) maybe none need it
                 .document("WorldType", "1.4.10", "A Minecraft world's world type.");
         Registration.registerConverter(World.class, WorldCreatorData.class, WorldCreatorData::fromWorld);
         Registration.registerExpression(ExprNewCreator.class, WorldCreatorData.class, ExpressionType.COMBINED,

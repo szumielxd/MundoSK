@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import javax.annotation.Nullable;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +27,8 @@ public abstract class SkullUtil {
     public static final short DURABILITY = (short) SkullType.PLAYER.ordinal();
     public static final Reflection.FieldAccessor CRAFT_META_SKULL_PROFILE = Reflection.getField(Reflection.getCraftBukkitClass("inventory.CraftMetaSkull"), "profile", Reflection.getClass("com.mojang.authlib.GameProfile"));
     public static final Reflection.FieldAccessor CRAFT_SKULL_PROFILE = Reflection.getField(Reflection.getCraftBukkitClass("block.CraftSkull"), "profile", Reflection.getClass("com.mojang.authlib.GameProfile"));
+    public static final Optional<Material> SKULL_ITEM = Optional.ofNullable(Material.getMaterial("SKULL_ITEM"));
+    public static final Optional<Material> SKULL_BLOCK = Optional.ofNullable(Material.getMaterial("SKULL"));
 
     /**
      * @return A {@link WrappedGameProfile} containing the information representing the owner and skin of this skull,
@@ -137,10 +141,20 @@ public abstract class SkullUtil {
      * {@link Optional#empty()} otherwise
      */
     public static Optional<Held> from(ItemStack itemStack) {
-        if (itemStack.getType() == Material.SKULL_ITEM) {
+        if (itemStack.getType() == Optional.ofNullable(Material.getMaterial("SKULL_ITEM")).orElseGet(() -> Material.PLAYER_HEAD)) {
             return Optional.of(new Held(itemStack));
         }
         return Optional.empty();
+    }
+    
+    private static boolean isSkull(Material material) {
+    	if (SKULL_ITEM.isPresent()) return material == SKULL_ITEM.get() || material == SKULL_BLOCK.get();
+    	switch (material) {
+    	case PLAYER_HEAD:
+    	case PLAYER_WALL_HEAD:
+    	return true;
+    	default: return false;
+    	}
     }
 
     /**
@@ -151,23 +165,29 @@ public abstract class SkullUtil {
      * {@link Optional#empty()} otherwise
      */
     public static Optional<Placed> from(Block block) {
-        if (block.getType() == Material.SKULL) {
+        if (block.getType() == SKULL_BLOCK.orElseGet(() -> Material.PLAYER_HEAD)) {
             return Optional.of(new Placed(block));
         }
         return Optional.empty();
     }
 
     public static Held make(ItemStack itemStack) {
-        if (itemStack.getType() != Material.SKULL_ITEM) {
-            itemStack.setType(Material.SKULL_ITEM);
-        }
+    	if (!isSkull(itemStack.getType())) {
+    		itemStack.setType(SKULL_ITEM.orElseGet(() -> Material.PLAYER_HEAD));
+    		if (SKULL_ITEM.isPresent()) itemStack.setDurability(DURABILITY);
+    	}
         return new Held(itemStack);
     }
 
     public static Placed make(Block block) {
-        if (block.getType() != Material.SKULL) {
-            block.setType(Material.SKULL);
-        }
+    	if (!isSkull(block.getType())) {
+    		block.setType(SKULL_BLOCK.orElseGet(() -> Material.PLAYER_HEAD));
+    		if (SKULL_BLOCK.isPresent()) {
+    			try {
+					Block.class.getMethod("setData", Byte.TYPE).invoke(block, DURABILITY);
+				} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {}
+    		}
+    	}
         return new Placed(block);
     }
 
@@ -175,15 +195,15 @@ public abstract class SkullUtil {
         public final ItemStack item;
 
         private Held() {
-            this(new ItemStack(Material.SKULL_ITEM));
-            if (item.getDurability() != DURABILITY) {
-                item.setDurability(DURABILITY);
+            this(new ItemStack(SKULL_BLOCK.orElseGet(() -> Material.PLAYER_HEAD)));
+            if (SKULL_BLOCK.isPresent()) {
+            	this.item.setDurability(DURABILITY);
             }
         }
 
         private Held(ItemStack item) {
             this.item = item;
-            if (item.getType() != Material.SKULL_ITEM) {
+            if (isSkull(item.getType())) {
                 throw new IllegalArgumentException("Illegal type: " + item.getType() + ", should be SKULL_ITEM");
             }
         }
@@ -218,7 +238,7 @@ public abstract class SkullUtil {
 
         private Placed(Block block) {
             this.block = block;
-            if (block.getType() != Material.SKULL) {
+            if (isSkull(block.getType())) {
                 throw new IllegalArgumentException("Illegal block type: " + block.getType() + ", should be SKULL");
             }
         }

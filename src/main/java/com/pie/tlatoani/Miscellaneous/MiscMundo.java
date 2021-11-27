@@ -328,9 +328,9 @@ public class MiscMundo {
                 .document("Respawn Location", "1.8", "An expression, used in the 'on respawn' event, for the location at which a player respawned.");
         Registration.registerExpression(ExprDestination.class, Location.class, ExpressionType.SIMPLE, "destination")
                 .document("Destination", "1.8", "An expression, used in the 'on teleport' event, for the destination of the teleporting entity.");
-        Registration.registerExpression(ExprNewPortal.class, Location.class, ExpressionType.PROPERTY, "new nether portal within [[a] radius of] %number% (block|meter)s of %location%")
+        /*Registration.registerExpression(ExprNewPortal.class, Location.class, ExpressionType.PROPERTY, "new nether portal within [[a] radius of] %number% (block|meter)s of %location%")
                 .document("New Nether Portal", "1.8", "An expression, used in the 'on [player] portal' event, that attempts to create a new nether portal within the specified radius of the specified location, "
-                        + "and returns the location of the created portal if successful, and is not set otherwise.");
+                        + "and returns the location of the created portal if successful, and is not set otherwise.");*/
     }
 
     private static void loadNoteBlock() {

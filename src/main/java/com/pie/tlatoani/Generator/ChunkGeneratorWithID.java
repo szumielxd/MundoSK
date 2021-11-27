@@ -1,11 +1,10 @@
 package com.pie.tlatoani.Generator;
 
 import org.bukkit.*;
-import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 
-import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Random;
 
@@ -34,17 +33,29 @@ public class ChunkGeneratorWithID extends ChunkGenerator {
 
     @Deprecated
     public byte[] generate(World world, Random random, int x, int z) {
-        return wrappedGenerator.generate(world, random, x, z);
+        try {
+			return (byte[]) wrappedGenerator.getClass().getMethod("generate", World.class, Random.class, Integer.TYPE, Integer.TYPE).invoke(wrappedGenerator, world, random, x, z);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     @Deprecated
     public short[][] generateExtBlockSections(World world, Random random, int x, int z, ChunkGenerator.BiomeGrid biomes) {
-        return wrappedGenerator.generateExtBlockSections(world, random, x, z, biomes);
+        try {
+			return (short[][]) wrappedGenerator.getClass().getMethod("generateExtBlockSections", World.class, Random.class, Integer.TYPE, Integer.TYPE, ChunkGenerator.BiomeGrid.class).invoke(wrappedGenerator, world, random, x, z, biomes);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     @Deprecated
     public byte[][] generateBlockSections(World world, Random random, int x, int z, ChunkGenerator.BiomeGrid biomes) {
-        return wrappedGenerator.generateBlockSections(world, random, x, z, biomes);
+        try {
+			return (byte[][]) wrappedGenerator.getClass().getMethod("generateBlockSections", World.class, Random.class, Integer.TYPE, Integer.TYPE, ChunkGenerator.BiomeGrid.class).invoke(wrappedGenerator, world, random, x, z, biomes);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     @Override
